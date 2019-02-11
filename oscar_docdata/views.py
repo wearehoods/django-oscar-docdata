@@ -1,10 +1,13 @@
 import logging
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, HttpResponse, HttpResponseNotFound, Http404, \
-    HttpResponseServerError
+
+from django.db import transaction
+from django.http import (
+    HttpResponseBadRequest, HttpResponseRedirect, HttpResponse,
+    HttpResponseNotFound, Http404, HttpResponseServerError)
 from django.utils import translation
 from django.views.generic import View
+
 from oscar_docdata import appsettings
-from oscar_docdata.compat import transaction_atomic
 from oscar_docdata.exceptions import DocdataStatusError
 from oscar_docdata.facade import get_facade
 from oscar_docdata.models import DocdataOrder
@@ -95,7 +98,7 @@ class OrderReturnView(UpdateOrderMixin, View):
 
         # Need to make sure the latest status is present,
         # won't wait for Docdata to call our update API.
-        with transaction_atomic():
+        with transaction.atomic():
             self.order = self.get_order(order_key)   # this is the docdata id.
             self.update_order(self.order)
 
@@ -152,7 +155,7 @@ class StatusChangedNotificationView(UpdateOrderMixin, View):
 
         logger.info("Got Docdata status changed notification for {0}".format(order_key))
 
-        with transaction_atomic():
+        with transaction.atomic():
             try:
                 self.order = self.get_order(order_key)  # Inconsistent, this call uses the merchant_order_id
             except Http404 as e:
@@ -173,7 +176,7 @@ class StatusChangedNotificationView(UpdateOrderMixin, View):
                     content_type='text/plain; charset=utf-8'
                 )
 
-        responses = status_changed_view_called.send(sender=self.__class__, request=request, order=self.order)
+        status_changed_view_called.send(sender=self.__class__, request=request, order=self.order)
 
         # Return 200 as required by DocData when the status changed notification was consumed.
         return HttpResponse(u"ok, order {0} updated\n".format(order_key), content_type='text/plain; charset=utf-8')
