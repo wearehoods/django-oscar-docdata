@@ -116,11 +116,19 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
+        'suds_handler': {
+            'class': 'sandbox.log_handler.SudsLogHandler',
+        }
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
             'level': 'INFO',
+        },
+        'suds.transport': {
+            'handlers': ['suds_handler'],
+            'level': 'DEBUG' if DEBUG is True else 'INFO',
+            'propagate': True,
         },
         'oscar': {
             'handlers': ['console'],
