@@ -6,11 +6,12 @@ class SudsLogHandler(logging.StreamHandler):
     Hack log handler for 'suds.transport', that
     just "reformat" newlines in binary representations
     """
+
     def emit(self, record):
         try:
             msg = self.format(record)
 
-            msg = msg.replace("\\n", "\n") # Hack ;)
+            msg = msg.replace("\\n", "\n")  # Hack ;)
 
             stream = self.stream
             stream.write(self.terminator)
